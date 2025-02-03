@@ -1,13 +1,13 @@
 import os
 import re
 from dotenv import load_dotenv
-import google.generativeai as genai
+import openai
 from flask import Flask, request
 from langcodes import Language
 
 load_dotenv()
-model_name = os.getenv("GEMINI_MODEL_NAME")
-api_key = os.getenv("GEMINI_API_KEY")
+model_name = os.getenv("OPENAI_MODEL_NAME")
+api_key = os.getenv("OPENAI_API_KEY")
 listen_address = os.getenv("LISTEN_ADDRESS")
 listen_port = os.getenv("LISTEN_PORT")
 default_from_language = os.getenv("DEFAULT_FROM_LANGUAGE")
@@ -17,8 +17,8 @@ default_to_language = os.getenv("DEFAULT_TO_LANGUAGE")
 if not all([model_name, api_key, listen_address, listen_port, default_from_language, default_to_language]):
     raise ValueError("""
     Missing required environment variables:
-    GEMINI_MODEL_NAME
-    GEMINI_API_KEY
+    OPENAI_MODEL_NAME
+    OPENAI_API_KEY
     LISTEN_ADDRESS
     LISTEN_PORT
     DEFAULT_FROM_LANGUAGE
@@ -35,20 +35,7 @@ except ValueError as exc:
     raise ValueError("LISTEN_PORT must be a valid port number between 0-65535") from exc
 
 # Configure the API key
-genai.configure(api_key=api_key)
-
-# Create the model
-generation_config = {
-    "temperature": 0.9,
-    "top_p": 0.95,
-    "top_k": 40,
-    "max_output_tokens": 8192,
-    "response_mime_type": "text/plain",
-}
-model = genai.GenerativeModel(
-    model_name=model_name,
-    generation_config=generation_config,
-)
+openai.api_key = api_key
 
 # Create the Flask app
 app = Flask(__name__)
@@ -69,8 +56,8 @@ def translate():
     lang_to = Language.get(lang_to).display_name()
 
     # create message
-    message = f"""You are a professional,authentic translation engine,only returns translations.\n
-For example:\n
+    system_message = "You are a professional,authentic translation engine,only returns translations."
+    user_message = f"""For example:\n
 <Start>\n
 Hello <Keep This Symbol>\n
 World <Keep This Symbol>\n
@@ -85,14 +72,20 @@ Translate the content to {lang_from} into {lang_to}:\n
 \n
 <Start>{content}<End>"""
 
-    # create chat session
-    chat_session = model.start_chat(history=[])
+    # create client
+    client = openai.OpenAI()
 
     # send message
-    response = chat_session.send_message(message)
+    response = client.chat.completions.create(
+        model=model_name,
+        messages=[
+            {"role": "system", "content": system_message},
+            {"role": "user", "content": user_message},
+        ]
+    )
 
     # remove start and end tags
-    trans = re.sub(r"<Start>|<End>", "", response.text)
+    trans = re.sub(r"<Start>|<End>", "", response.choices[0].message.content)
 
     # return translation
     return trans
