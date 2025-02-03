@@ -1,3 +1,6 @@
 flask
-google-generativeai
 python-dotenv
+langcodes
+anthropic
+google-generativeai
+openai

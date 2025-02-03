@@ -3,6 +3,7 @@ import re
 from dotenv import load_dotenv
 import google.generativeai as genai
 from flask import Flask, request
+from langcodes import Language
 
 load_dotenv()
 model_name = os.getenv("GEMINI_MODEL_NAME")
@@ -62,6 +63,10 @@ def translate():
     content = request.args.get('text')
     if content is None:
         return "Error: Missing required parameter 'text'", 400
+
+    # convert lang_from and lang_to to language names
+    lang_from = Language.get(lang_from).display_name()
+    lang_to = Language.get(lang_to).display_name()
 
     # create chat session
     chat_session = model.start_chat(history=[])
