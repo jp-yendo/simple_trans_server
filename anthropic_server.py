@@ -5,7 +5,7 @@ import anthropic
 from flask import Flask, request
 from langcodes import Language
 
-load_dotenv()
+load_dotenv(override=True)
 model_name = os.getenv("ANTHROPIC_MODEL_NAME")
 api_key = os.getenv("ANTHROPIC_API_KEY")
 listen_address = os.getenv("LISTEN_ADDRESS")

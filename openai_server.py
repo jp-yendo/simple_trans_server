@@ -5,7 +5,7 @@ import openai
 from flask import Flask, request
 from langcodes import Language
 
-load_dotenv()
+load_dotenv(override=True)
 model_name = os.getenv("OPENAI_MODEL_NAME")
 api_key = os.getenv("OPENAI_API_KEY")
 listen_address = os.getenv("LISTEN_ADDRESS")
